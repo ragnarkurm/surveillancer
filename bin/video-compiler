@@ -32,7 +32,6 @@ do
     fi
 
     VIDEO="$VIDEOS/$DATE/$HOUR0.avi"
-    echo "Compiling $VIDEO"
     ffmpeg \
       $FFMPEGOPTS \
       -framerate "$FRAMERATE" \
