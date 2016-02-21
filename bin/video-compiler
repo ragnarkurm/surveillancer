@@ -1,0 +1,72 @@
+#!/bin/bash
+
+if /usr/bin/test "$#" -ne 1 -o ! -r "$1"; then
+  echo "Usage: $0 <conf>"
+  exit
+fi
+source "$1"
+source "$LIB/lib.sh"
+
+#
+#   COMPILE HOURLY VIDEOS
+#
+
+TODAY=$(date +'%Y-%m-%d')
+TOHOUR=$(date +'%H' | sed -e 's/^0*//' -e 's/^$/0/')
+
+for DATE in $(find "$IMAGES" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort)
+do
+
+  if [ ! -d "$VIDEOS/$DATE" ]; then
+    mkdir "$VIDEOS/$DATE" || continue
+  fi
+
+  for HOUR0 in $(find "$IMAGES/$DATE" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort)
+  do
+
+    HOUR=$(echo "$HOUR0" | sed -e 's/^0*//' -e 's/^$/0/')
+
+    # skip current hour and future
+    if [ "$DATE" = "$TODAY" -a "$HOUR" -ge "$TOHOUR" ]; then
+      continue
+    fi
+
+    VIDEO="$VIDEOS/$DATE/$HOUR0.avi"
+    echo "Compiling $VIDEO"
+    ffmpeg \
+      $FFMPEGOPTS \
+      -framerate "$FRAMERATE" \
+      -pattern_type glob \
+      -i "$IMAGES/$DATE/$HOUR0/*.png" \
+      -c:v mpeg4 \
+      -q:v 10 \
+      "$VIDEO" \
+    && rm -rf "$IMAGES/$DATE/$HOUR0"
+
+  done
+done
+
+#
+#   COMPILE DAILY VIDEOS
+#
+
+TODAY=$(date +'%Y-%m-%d')
+
+for DATE in $(find "$VIDEOS" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | sort)
+do
+
+  # skip current date
+  if [ "$DATE" = "$TODAY" ]; then
+    continue
+  fi
+
+  VIDEO="$VIDEOS/$DATE.avi"
+  ffmpeg \
+    $FFMPEGOPTS \
+    -f concat \
+    -i <(find "$VIDEOS/$DATE" -name "*.avi" -exec readlink -f {} \; | sort | sed -e 's/^/file /') \
+    -c copy \
+    "$VIDEO" \
+  && rm -rf "$VIDEOS/$DATE"
+
+done

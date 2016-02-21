@@ -1,0 +1,64 @@
+#!/bin/bash
+
+if /usr/bin/test "$#" -ne 1 -o ! -r "$1"; then
+  echo "Usage: $0 <conf>"
+  exit
+fi
+source "$1"
+source "$LIB/lib.sh"
+
+(
+
+  flock -x -n 200 || exit 1
+
+  while true
+  do
+
+    NOW=$(usage-sleeper "$INTERVAL") || continue
+    read YEAR MON DAY HOUR MIN SEC <<< $(echo "$NOW")
+
+    USE=$(df --output=pcent "$DATA" | grep -v '^Use' | tr -cd 0-9)
+    if [ "$USE" -gt "$GUARD" ]; then
+      continue
+    fi
+
+    DAYDIR="$IMAGES/$YEAR-$MON-$DAY"
+    if [ ! -d "$DAYDIR" ]; then
+      cp -frL "$CACHE" "$DAYDIR"
+      if [ "$?" -ne 0 ]; then
+        rm -rf "$DAYDIR"
+        continue
+      fi
+    fi
+
+    TMP=$(mktemp --tmpdir="$TMPDIR" --suffix=.png usage-XXXXXX)
+    scrot -u -z "$TMP"
+    if [ "$?" -ne 0 ]; then
+      rm -f "$TMP"
+      continue
+    fi
+
+    ANNOTATION="$HOUR:$MIN"
+    mogrify \
+      -geometry "$GEOM" \
+      -extent "$GEOM" \
+      -gravity center \
+      -background black \
+      $TEXTOPTS \
+      -annotate 0 "$ANNOTATION" \
+      "$TMP"
+    if [ "$?" -ne 0 ]; then
+      rm -f "$TMP"
+      continue
+    fi
+
+    IMAGE="$DAYDIR/$HOUR/$MIN-$SEC.png"
+    mv "$TMP" "$IMAGE"
+    if [ "$?" -ne 0 ]; then
+      rm -f "$TMP"
+      continue
+    fi
+
+  done
+
+) 200> "$LOCK"

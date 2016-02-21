@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if /usr/bin/test "$#" -ne 1 -o ! -r "$1"; then
+  echo "Usage: $0 <conf>"
+  exit
+fi
+source "$1"
+source "$LIB/lib.sh"
+
+# not using xargs is slightly safer
+
+find "$IMAGES" -type f -mtime "+$CLEAN_IMAGES_DAYS" -exec rm {} \;
+find "$IMAGES" -mindepth 1 -mtime "$CLEAN_IMAGES_DAYS" -type d -exec rmdir {} \;
+
+find "$VIDEOS" -type f -mtime "+$CLEAN_VIDEOS_DAYS" -exec rm {} \;
+find "$VIDEOS" -mindepth 1 -mtime "+$CLEAN_VIDEOS_DAYS" -type d -exec rmdir {} \;
+
+find "$TMPDIR" -type f -mtime "+$CLEAN_TMPDIR_DAYS" -exec rm {} \;
+find "$TMPDIR" -mindepth 1 -mtime "+$CLEAN_TMPDIR_DAYS" -type d -exec rmdir {} \;

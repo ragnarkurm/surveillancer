@@ -1,0 +1,65 @@
+#!/bin/bash
+
+if /usr/bin/test "$#" -ne 1 -o ! -r "$1"; then
+  echo "Usage: $0 <conf>"
+  exit
+fi
+source "$1"
+source "$LIB/lib.sh"
+
+if [ -d "$CACHE" ]; then
+  echo "Please remove cache manually: $CACHE"
+  exit
+fi
+
+mkdir -p "$CACHE"
+
+for HOUR in {0..23}
+do
+
+  HOUR0=$(printf '%02d' "$HOUR")
+
+  mkdir "$CACHE/$HOUR0"
+
+  for MIN in {0..59}
+  do
+
+    MIN0=$(printf '%02d' "$MIN")
+
+    for SEC in {0..59}
+    do
+
+      continue
+
+      if [ $(($SEC % $INTERVAL)) -ne 0 ]; then
+        continue
+      fi
+
+      SEC0=$(printf '%02d' "$SEC")
+
+      IMAGE="$CACHE/$HOUR0/$MIN0-$SEC0.png"
+      ANNOTATION="$HOUR0:$MIN0"
+
+      if [ "$ANNOTATION" = "$PREV_ANNOTATION" ]; then
+        ln -s $(basename "$PREV_IMAGE") "$IMAGE"
+      else
+        convert \
+          -size "$GEOM" \
+          xc:black \
+          $TEXTOPTS \
+          -annotate 0 "$ANNOTATION" \
+          "$IMAGE"
+      fi
+
+      PREV_ANNOTATION="$ANNOTATION"
+      PREV_IMAGE="$IMAGE"
+
+    done
+
+    echo -ne "\r" $(printf '%d%%' $(( (100*$HOUR*60+$MIN) / (23*60+59) )))
+
+  done
+
+done
+
+echo -e "\rDone"
