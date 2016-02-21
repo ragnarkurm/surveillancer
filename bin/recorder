@@ -14,7 +14,7 @@ source "$LIB/lib.sh"
   while true
   do
 
-    NOW=$(usage-sleeper "$INTERVAL") || continue
+    NOW=$(sleeper "$INTERVAL") || continue
     read YEAR MON DAY HOUR MIN SEC <<< $(echo "$NOW")
 
     USE=$(df --output=pcent "$DATA" | grep -v '^Use' | tr -cd 0-9)
@@ -31,7 +31,7 @@ source "$LIB/lib.sh"
       fi
     fi
 
-    TMP=$(mktemp --tmpdir="$TMPDIR" --suffix=.png usage-XXXXXX)
+    TMP=$(mktemp --tmpdir="$TMPDIR" --suffix=.png screenshot-XXXXXX)
     scrot -u -z "$TMP"
     if [ "$?" -ne 0 ]; then
       rm -f "$TMP"
