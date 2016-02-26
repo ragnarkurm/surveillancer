@@ -43,6 +43,9 @@ do
     && rm -rf "$IMAGES/$DATE/$HOUR0"
 
   done
+
+  find "$IMAGES/$DATE" -maxdepth 0 -empty -exec rmdir {} \;
+
 done
 
 #
@@ -67,5 +70,7 @@ do
     -c copy \
     "$VIDEO" \
   && rm -rf "$VIDEOS/$DATE"
+
+  find "$VIDEOS/$DATE" -maxdepth 0 -empty -exec rmdir {} \;
 
 done
