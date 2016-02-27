@@ -71,6 +71,4 @@ do
     "$VIDEO" \
   && rm -rf "$VIDEOS/$DATE"
 
-  find "$VIDEOS/$DATE" -maxdepth 0 -empty -exec rmdir {} \;
-
 done
